@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playfair Cipher with File Upload</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900&display=swap');
+
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f2f4f6;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            font-size: 75px;
+            color: #0F9D58;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        #heading-container {
+            margin-top: 70px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: center;
+            letter-spacing: 8px;
+            font-style: italic;
+            width: 100%;
+        }
+
+        #main-container {
+            display: flex;
+            justify-content: center;
+            flex-direction: row;
+            width: 100%;
+        }
+
+        .box {
+            background-color: #fff;
+            width: 375px;
+            height: 300px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, .14);
+            margin: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .box .heading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 70px;
+            width: 100%;
+            border-bottom: 1px solid #e3e8ec;
+        }
+
+        .box h2 {
+            color: #0F9D58;
+        }
+
+        .box #controls {
+            width: 100%;
+            height: 90%;
+        }
+
+        input[type="radio"]:checked+label {
+            color: #0F9D58;
+        }
+
+        #submit {
+            cursor: pointer;
+            outline: 0;
+            display: inline-block;
+            font-weight: 400;
+            margin: 15px 0px 20px 0px;
+            line-height: 1.5;
+            text-align: center;
+            background-color: transparent;
+            border: 1px solid transparent;
+            padding: 6px 24px;
+            font-size: 1rem;
+            border-radius: .25rem;
+            transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+            color: #fff;
+            background-color: #0F9D58;
+            border-color: #0F9D58;
+        }
+
+        #submit:hover {
+            background-color: #11ab61;
+            border-color: #11ab61;
+        }
+
+        .box textarea {
+            width: 100%;
+            height: 90%;
+            padding: 15px;
+            font-size: 14px;
+            box-sizing: border-box;
+            resize: none;
+            border: none;
+            outline: none;
+        }
+
+        input[type="file"],
+        input[type="text"] {
+            margin: 10px 0;
+            padding: 8px;
+            width: 90%;
+            font-size: 16px;
+            border: 1px solid #e3e8ec;
+            border-radius: 5px;
+        }
+
+        textarea {
+            width: 90%;
+            height: 100px;
+            padding: 15px;
+            font-size: 14px;
+            box-sizing: border-box;
+            resize: none;
+            border: none;
+            outline: none;
+            margin: 10px 0;
+            border: 1px solid #e3e8ec;
+            border-radius: 5px;
+        }
+
+        #fileInput {
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div id="heading-container">
+            <h1>PLAYFAIR CIPHER</h1>
+        </div>
+        <div id="main-container">
+            <div class="box">
+                <div class="heading">
+                    <h2>File Upload & Controls</h2>
+                </div>
+                <div id="controls">
+                    <input type="file" id="fileInput" accept=".txt,.docx" />
+                    <input type="text" id="keyInput" placeholder="Enter keyword" />
+
+                    <div class="row">
+                        <input type="radio" name="operation" id="encode" value="encode" checked />
+                        <label for="encode">Encode</label>
+                        <input type="radio" name="operation" id="decode" value="decode" />
+                        <label for="decode">Decode</label>
+                    </div>
+
+                    <input type="submit" name="submit" id="submit" value="Process and Download" />
+                </div>
+            </div>
+            <div class="box">
+                <div class="heading">
+                    <h2>File Contents</h2>
+                </div>
+                <textarea readonly placeholder="File content will appear here" id="status"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const keyInput = document.getElementById('keyInput');
+        const status = document.getElementById('status');
+        const submitButton = document.getElementById('submit');
+        const alphabet = "ABCDEFGHIKLMNOPQRSTUVWXYZ"; // Note that 'J' is excluded for Playfair cipher
+
+        function createMatrix(key) {
+            const matrix = [];
+            const seen = new Set();
+            key = key.toUpperCase().replace(/J/g, "I").replace(/[^A-Z]/g, ""); // Sanitize key input
+            for (let char of key) {
+                if (!seen.has(char)) {
+                    seen.add(char);
+                    matrix.push(char);
+                }
+            }
+            for (let charCode = 65; charCode <= 90; charCode++) {
+                let char = String.fromCharCode(charCode);
+                if (char !== 'J' && !seen.has(char)) {
+                    seen.add(char);
+                    matrix.push(char);
+                }
+            }
+            return matrix;
+        }
+
+        function formatText(text) {
+            text = text.toUpperCase().replace(/J/g, "I").replace(/[^A-Z]/g, ""); // Sanitize text input
+            let formatted = '';
+            for (let i = 0; i < text.length; i++) {
+                if (i < text.length - 1 && text[i] === text[i + 1]) {
+                    formatted += text[i] + 'X'; 
+                } else {
+                    formatted += text[i];
+                }
+            }
+            if (formatted.length % 2 !== 0) {
+                formatted += 'X'; 
+            }
+            return formatted;
+        }
+
+        function getPosition(matrix, char) {
+            const index = matrix.indexOf(char);
+            return [Math.floor(index / 5), index % 5];
+        }
+
+        function playfairCipher(text, key, mode) {
+            const matrix = createMatrix(key);
+            text = formatText(text);
+            let result = '';
+            for (let i = 0; i < text.length; i += 2) {
+                const [r1, c1] = getPosition(matrix, text[i]);
+                const [r2, c2] = getPosition(matrix, text[i + 1]);
+
+                if (r1 === r2) {
+                    if (mode === 'encode') {
+                        result += matrix[r1 * 5 + (c1 + 1) % 5];
+                        result += matrix[r2 * 5 + (c2 + 1) % 5];
+                    } else {
+                        result += matrix[r1 * 5 + (c1 + 4) % 5];
+                        result += matrix[r2 * 5 + (c2 + 4) % 5];
+                    }
+                } else if (c1 === c2) {
+                    if (mode === 'encode') {
+                        result += matrix[((r1 + 1) % 5) * 5 + c1];
+                        result += matrix[((r2 + 1) % 5) * 5 + c2];
+                    } else {
+                        result += matrix[((r1 + 4) % 5) * 5 + c1];
+                        result += matrix[((r2 + 4) % 5) * 5 + c2];
+                    }
+                } else {
+                    result += matrix[r1 * 5 + c2];
+                    result += matrix[r2 * 5 + c1];
+                }
+            }
+            return result;
+        }
+
+        submitButton.addEventListener('click', async () => {
+            const file = fileInput.files[0];
+            const key = keyInput.value;
+            const operation = document.querySelector('input[name="operation"]:checked').value;
+
+            if (!file) {
+                alert("Please select a file to upload.");
+                return;
+            }
+            if (key.length === 0) {
+                alert("Please enter a key.");
+                return;
+            }
+
+            let text;
+            if (file.name.endsWith('.txt')) {
+                text = await file.text();
+            } else if (file.name.endsWith('.docx')) {
+                text = await readDocxFile(file);
+            } else {
+                alert("Unsupported file type. Please upload a .txt or .docx file.");
+                return;
+            }
+            status.value = text;
+
+            const processedText = playfairCipher(text, key, operation);
+
+            status.value = processedText;
+
+            if (file.name.endsWith('.txt')) {
+                downloadFile('processed.txt', processedText, 'text/plain');
+            } else if (file.name.endsWith('.docx')) {
+                await downloadDocxFile('processed.docx', processedText, file);
+            }
+        });
+
+        function downloadFile(filename, text, mimeType) {
+            const blob = new Blob([text], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        async function downloadDocxFile(filename, processedText, originalFile) {
+            const zip = new JSZip();
+            const reader = new FileReader();
+
+            reader.onload = async function (event) {
+                const content = await zip.loadAsync(event.target.result);
+                const doc = content.file("word/document.xml");
+
+                if (doc) {
+                    const updatedContent = generateDocxContent(processedText);
+                    content.file("word/document.xml", updatedContent);
+
+                    const updatedZip = await zip.generateAsync({ type: "blob" });
+                    const url = URL.createObjectURL(updatedZip);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                }
+            };
+
+            reader.readAsArrayBuffer(originalFile);
+        }
+
+        function generateDocxContent(text) {
+            const docxXmlTemplate = `
+                <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+                    <w:body>
+                        <w:p>
+                            <w:r>
+                                <w:t>${text}</w:t>
+                            </w:r>
+                        </w:p>
+                    </w:body>
+                </w:document>
+            `;
+            return docxXmlTemplate;
+        }
+
+        async function readDocxFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async function (event) {
+                    const zip = new JSZip();
+                    const content = await zip.loadAsync(event.target.result);
+                    const doc = content.file("word/document.xml").async("string");
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(await doc, "text/xml");
+                    const texts = xmlDoc.getElementsByTagName("w:t");
+                    let docText = "";
+                    for (let i = 0; i < texts.length; i++) {
+                        docText += texts[i].childNodes[0].nodeValue;
+                    }
+                    resolve(docText);
+                };
+                reader.onerror = function (err) {
+                    reject(err);
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+    </script>
+</body>
+
+</html>

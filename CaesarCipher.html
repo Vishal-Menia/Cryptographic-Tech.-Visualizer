@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caesar Cipher File Encryption</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+
+    * {
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f2f4f6;
+        margin: 0;
+        padding: 0;
+    }
+
+    h1 {
+        font-size: 75px;
+        color: #0F9D58;
+    }
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+
+    #heading-container {
+        margin-top: 70px;
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: center;
+        letter-spacing: 8px;
+        font-style: italic;
+        width: 100%;
+    }
+
+    #main-container {
+        display: flex;
+        justify-content: center;
+        flex-direction: row;
+        width: 100%;
+    }
+
+    .box {
+        background-color: #fff;
+        width: 375px;
+        height: 300px;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, .14);
+        margin: 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    .box .heading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 70px;
+        width: 100%;
+        border-bottom: 1px solid #e3e8ec;
+    }
+
+    .box h2 {
+        color: #0F9D58;
+    }
+
+    .box #controls {
+        width: 100%;
+        height: 90%;
+    }
+
+    .box #controls .row {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        border-bottom: 1px solid #e3e8ec;
+    }
+
+    .box #controls .row:first-child div {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        flex-grow: 1;
+        height: 30px;
+        width: 100%;
+    }
+
+    #encode,
+    #decode {
+        margin: 10px;
+    }
+
+    input[type="radio"]:checked+label {
+        color: #0F9D58;
+    }
+
+    .box #controls .row:first-child div:last-child {
+        border-left: 1px solid #e3e8ec;
+    }
+
+    .box #controls .row:nth-child(2) div {
+        display: flex;
+        flex-direction: row;
+        color: #90999e;
+        font-weight: 500;
+        height: fit-content;
+        width: 100%;
+        padding-top: 5px;
+    }
+
+    .box #controls .row:nth-child(2) div div {
+        padding-bottom: 10px;
+    }
+
+    .box #controls .row:nth-child(2) div span {
+        margin-left: 10px;
+    }
+
+    #shift-input,
+    #mod-input {
+        align-self: center;
+        text-align: center;
+        width: 40px;
+        border: 0;
+        outline: none;
+        font-size: 14px;
+    }
+
+    .box #controls .row:nth-child(2) div:last-child {
+        border-left: 1px solid #e3e8ec;
+    }
+
+    .box #controls .row:nth-child(4) div {
+        display: flex;
+        flex-direction: column;
+        color: #90999e;
+        font-weight: 500;
+        height: fit-content;
+        width: 100%;
+        padding: 5px;
+        text-align: left;
+    }
+
+    .box #controls .row:nth-child(4) div:last-child {
+        border-left: 1px solid #e3e8ec;
+    }
+
+    select {
+        border: 0;
+        padding: 5px;
+        outline: 0;
+        font-size: 16px;
+    }
+
+    #submit {
+        cursor: pointer;
+        outline: 0;
+        display: inline-block;
+        font-weight: 400;
+        margin: 15px 0px 20px 0px;
+        line-height: 1.5;
+        text-align: center;
+        background-color: transparent;
+        border: 1px solid transparent;
+        padding: 6px 24px;
+        font-size: 1rem;
+        border-radius: .25rem;
+        transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+        color: #fff;
+        background-color: #0F9D58;
+        border-color: #0F9D58;
+    }
+
+    #submit:hover {
+        background-color: #11ab61;
+        border-color: #11ab61;
+    }
+
+    .box textarea {
+        width: 100%;
+        height: 90%;
+        padding: 15px;
+        font-size: 14px;
+        box-sizing: border-box;
+        resize: none;
+        border: none;
+        outline: none;
+    }
+</style>
+
+<body>
+    <div class="container">
+        <div id="heading-container">
+            <h1>CAESAR CIPHER FILE ENCRYPTION</h1>
+        </div>
+        <div id="main-container">
+            <div class="box">
+                <div class="heading">
+                    <h2>File Upload & Controls</h2>
+                </div>
+                <form id="controls">
+                    <div class="row">
+                        <div>
+                            <input type="radio" name="code" id="encode" value="encode" checked="checked" />
+                            <label for="encode">Encode</label>
+                        </div>
+                        <div>
+                            <input type="radio" name="code" id="decode" value="decode" />
+                            <label for="decode">Decode</label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div>
+                            <span>Shift Key: </span>
+                            <input type="text" name="shift" id="shift-input" maxlength="4" size="4" value="3" />
+                        </div>
+                        <div>
+                            <span>Modulo: </span>
+                            <input type="text" name="mod" id="mod-input" maxlength="4" size="4" value="36" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <input type="file" id="file-input" accept=".txt,.docx">
+                    </div>
+                    <input type="submit" name="submit" id="submit" value="Proceed and download" />
+                </form>
+            </div>
+            <div class="box">
+                <div class="heading">
+                    <h2 id="heading-input">File Contents</h2>
+                </div>
+                <textarea readonly placeholder="File content will appear here" rows="20" id="input-text"></textarea>
+            </div>
+            <div class="box">
+                <div class="heading">
+                    <h2 id="heading-output">File Contents</h2>
+                </div>
+                <textarea readonly placeholder="Encrypted content will appear here" rows="20" id="output-text"></textarea>
+            </div>
+            <div id="error-message" style="color: red; font-weight: bold;"></div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById("controls");
+        const inputText = document.getElementById("input-text");
+        const outputText = document.getElementById("output-text");
+        const shiftKey = document.getElementById("shift-input");
+        const modulo = document.getElementById("mod-input");
+        const fileInput = document.getElementById("file-input");
+        const errorMessage = document.getElementById("error-message");
+
+        const defaultAlphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+        form.addEventListener("submit", (e) => {
+            e.preventDefault();
+            errorMessage.textContent = '';  
+
+            const file = fileInput.files[0];
+            if (!file) {
+                alert("Please upload a file.");
+                return;
+            }
+
+            if (file.name.endsWith(".txt")) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    handleTextInput(event.target.result.toLowerCase(), file.name);
+                };
+                reader.readAsText(file);
+            } else if (file.name.endsWith(".docx")) {
+                readDocxFile(file);
+            } else {
+                alert("Unsupported file type. Please upload a .txt or .docx file.");
+            }
+        });
+
+        function readDocxFile(file) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const arrayBuffer = event.target.result;
+                mammoth.extractRawText({ arrayBuffer: arrayBuffer })
+                    .then(function (resultObject) {
+                        const extractedText = resultObject.value.toLowerCase();
+                        handleTextInput(extractedText, file.name);
+                    })
+                    .catch(function (error) {
+                        console.error("Error extracting DOCX text:", error);
+                        errorMessage.textContent = "Failed to read .docx file. Error: " + error.message;
+                    });
+            };
+            reader.onerror = function (error) {
+                console.error("Error reading file:", error);
+                errorMessage.textContent = "Error reading .docx file.";
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function handleTextInput(text, fileName) {
+            inputText.value = text;
+
+            const selectedOperation = document.querySelector("input[name='code']:checked").value;
+            const isEncoding = selectedOperation === "encode";
+
+            const shiftedText = [...text].map((char) => {
+                const index = defaultAlphabet.indexOf(char);
+                if (index === -1) return char; // ignore non-alphabet chars
+
+                let newIndex = isEncoding
+                    ? (index + parseInt(shiftKey.value)) % parseInt(modulo.value)
+                    : (index - parseInt(shiftKey.value)) % parseInt(modulo.value);
+
+                if (newIndex < 0) newIndex += parseInt(modulo.value);
+                return defaultAlphabet[newIndex];
+            }).join("");
+
+            outputText.value = shiftedText;
+
+            // Create the encrypted file blob
+            const fileExtension = fileName.endsWith(".txt") ? "txt" : "docx";
+            if (fileExtension === "txt") {
+                // For text files
+                const encryptedFile = new Blob([shiftedText], { type: 'text/plain' });
+                createDownloadLink(encryptedFile, `encrypted_file.${fileExtension}`);
+            } else {
+                // For docx files
+                createDocxFile(shiftedText, `encrypted_file.${fileExtension}`);
+            }
+        }
+
+        function createDownloadLink(blob, fileName) {
+            const downloadLink = document.createElement("a");
+            downloadLink.href = URL.createObjectURL(blob);
+            downloadLink.download = fileName;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            URL.revokeObjectURL(downloadLink.href);
+            document.body.removeChild(downloadLink);
+        }
+
+        function createDocxFile(content, fileName) {
+            const zip = new JSZip();
+            zip.file("word/document.xml", `
+                <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+                    <w:body>
+                        <w:p>
+                            <w:r>
+                                <w:t>${content}</w:t>
+                            </w:r>
+                        </w:p>
+                    </w:body>
+                </w:document>
+            `);
+
+            zip.generateAsync({ type: "blob" }).then(function (blob) {
+                createDownloadLink(blob, fileName);
+            });
+        }
+    </script>
+</body>
+
+</html>

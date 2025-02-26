@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rail Fence Cipher</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e3f2fd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 0 20px;
+        }
+
+        .container {
+            text-align: center;
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #1976d2;
+            margin-bottom: 20px;
+        }
+
+        .cipher-container {
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        input, button {
+            padding: 12px;
+            margin: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+            width: calc(100% - 24px);
+            max-width: 300px;
+        }
+
+        button {
+            background-color: #d8ecff;
+            color: black;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #1976d2;
+            color: white;
+        }
+
+        #output {
+            font-size: 18px;
+            padding: 20px;
+            border: 1px solid #bbb;
+            border-radius: 5px;
+            background-color: #f9fbe7;
+            text-align: center;
+            margin-top: 20px;
+            color: #1b1b1b;
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap; 
+        }
+    </style>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Rail Fence Cipher</h1>
+        <div class="cipher-container">
+            <input type="number" id="numRails" min="2" max="10" value="3" placeholder="Num Rails">
+            <input type="file" id="file-input" accept=".txt,.docx">
+            <button onclick="processFile('encrypt')">Encrypt File</button>
+            <button onclick="processFile('decrypt')">Decrypt File</button>
+            <div id="output"></div>
+        </div>
+    </div>
+
+    <script>
+        async function readDocxFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    mammoth.extractRawText({ arrayBuffer: event.target.result })
+                        .then(result => resolve(result.value.replace(/\s+/g, '')))
+                        .catch(reject);
+                };
+                reader.onerror = reject;
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        function railFenceEncrypt(message, numRails) {
+            const rail = Array.from({ length: numRails }, () => []);
+            let direction = 1;
+            let row = 0;
+
+            for (const char of message) {
+                rail[row].push(char);
+                row += direction;
+
+                if (row === 0 || row === numRails - 1) {
+                    direction *= -1;
+                }
+            }
+            return rail.flat().join('');
+        }
+
+        function railFenceDecrypt(cipher, numRails) {
+            const rail = Array.from({ length: numRails }, () => []);
+            let direction = 1;
+            let row = 0;
+
+            for (let i = 0; i < cipher.length; i++) {
+                rail[row].push(null);
+                row += direction;
+
+                if (row === 0 || row === numRails - 1) {
+                    direction *= -1; 
+                }
+            }
+
+            let index = 0;
+            for (let r = 0; r < numRails; r++) {
+                for (let c = 0; c < rail[r].length; c++) {
+                    if (rail[r][c] === null) {
+                        rail[r][c] = cipher[index++];
+                    }
+                }
+            }
+
+            let result = '';
+            row = 0;
+            direction = 1;
+
+            for (let i = 0; i < cipher.length; i++) {
+                result += rail[row].shift();
+                row += direction;
+
+                if (row === 0 || row === numRails - 1) {
+                    direction *= -1;
+                }
+            }
+
+            return result;
+        }
+
+        async function processFile(mode) {
+            const fileInput = document.getElementById("file-input");
+            const numRails = parseInt(document.getElementById("numRails").value);
+
+            if (!fileInput.files.length || isNaN(numRails)) {
+                alert("Please upload a file and specify the number of rails.");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const fileType = file.name.split('.').pop().toLowerCase();
+            let fileContent = "";
+
+            if (fileType === 'txt') {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    fileContent = event.target.result.replace(/\s+/g, ''); 
+                    performCipherOperation(mode, fileContent, numRails);
+                };
+                reader.readAsText(file);
+            } else if (fileType === 'docx') {
+                try {
+                    fileContent = await readDocxFile(file);
+                    performCipherOperation(mode, fileContent, numRails);
+                } catch (error) {
+                    alert("Error reading .docx file: " + error.message);
+                }
+            } else {
+                alert("Unsupported file type. Please upload a .txt or .docx file.");
+            }
+        }
+
+        function performCipherOperation(mode, content, numRails) {
+            let result;
+            const outputDiv = document.getElementById("output");
+            outputDiv.innerHTML = ""; 
+
+            if (mode === 'encrypt') {
+                result = railFenceEncrypt(content, numRails);
+                outputDiv.innerHTML += `Encrypted Content: ${result}<br><br>`;
+                createDownloadLink(result, "encrypted_file.txt");
+                displayRailFenceVisualization(content, numRails, "Encryption Visualization");
+            } else {
+                result = railFenceDecrypt(content, numRails);
+                outputDiv.innerHTML += `Decrypted Content: ${result}<br><br>`;
+                createDownloadLink(result, "decrypted_file.txt");
+                displayRailFenceVisualization(result, numRails, "Decryption Visualization");
+            }
+        }
+
+        function displayRailFenceVisualization(message, numRails, title) {
+            const outputDiv = document.getElementById("output");
+            let visualization = title + ":\n\n";
+
+            const rail = Array.from({ length: numRails }, () => []);
+            let direction = 1;
+            let row = 0;
+
+            for (const char of message) {
+                rail[row].push(char);
+                row += direction;
+
+                if (row === 0 || row === numRails - 1) {
+                    direction *= -1; 
+                }
+            }
+            for (let r = 0; r < numRails; r++) {
+                visualization += rail[r].join('     ') + '\n';
+            }
+
+            outputDiv.innerHTML += visualization;
+        }
+
+        function createDownloadLink(content, fileName) {
+            const blob = new Blob([content], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            link.innerHTML = `Download ${fileName}`;
+            document.getElementById("output").appendChild(link);
+        }
+    </script>
+</body>
+</html>

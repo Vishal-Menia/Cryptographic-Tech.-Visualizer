@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cryptography Ciphers</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #8e44ad, #3498db);
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+        .container {
+            text-align: center;
+            width: 90%;
+            max-width: 1200px;
+        }
+        h1 {
+            color: white;
+            margin-bottom: 20px;
+            font-size: 3rem;
+        }
+        .section-title {
+            color: #fff;
+            font-size: 2rem;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .grid-item {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .grid-item:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.3);
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .icon {
+            font-size: 50px;
+            margin-bottom: 10px;
+        }
+        .text {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .transposition-section {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cryptographic Techniques
+        </h1>
+        
+        <div class="section-title">Substitution Techniques</div>
+        <div class="grid">
+            <div class="grid-item">
+                <a href="./CaesarCipher.html" target="_blank">
+                    <div class="icon">&#128272;</div>
+                    <div class="text">Caesar Cipher</div>
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="./homophonic.html" target="_blank">
+                    <div class="icon">&#128272;</div>
+                    <div class="text">Homophonic Cipher</div>
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="./monoalphabetic.html" target="_blank">
+                    <div class="icon">&#128272;</div>
+                    <div class="text">Monoalphabetic Cipher</div>
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="./playFairCipher.html" target="_blank">
+                    <div class="icon">&#128272;</div>
+                    <div class="text">Playfair Cipher</div>
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="./PolyAlphabetic.html" target="_blank">
+                    <div class="icon">&#128272;</div>
+                    <div class="text">Polyalphabetic Cipher</div>
+                </a>
+            </div>
+        </div>
+        
+        <div class="section-title">Transposition Techniques</div>
+        <div class="transposition-section">
+            <div class="grid">
+                <div class="grid-item">
+                    <a href="./Railfence.html" target="_blank">
+                        <div class="icon">&#128642;</div>
+                        <div class="text">Railfence Cipher</div>
+                    </a>
+                </div>
+                <div class="grid-item">
+                    <a href="./simplecolumn.html" target="_blank">
+                        <div class="icon">&#11035;</div>
+                        <div class="text">Simple Columnar Cipher</div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        console.log("Index page loaded successfully!");
+    </script>
+</body>
+</html>
